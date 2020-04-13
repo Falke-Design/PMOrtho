@@ -1,0 +1,23 @@
+{
+  "name": "PMOrtho",
+  "version": "1.0.0",
+  "dependencies": {
+    "lodash": "^4.17.15"
+  },
+  "scripts": {
+    "build": "/node_modules/.bin/webpack --config=webpack.build.js"
+  },
+  "devDependencies": {
+    "webpack": "^4.42.1",
+    "webpack-cli": "^3.3.11"
+  },
+  "description": "This is a [Leaflet Geoman](https://github.com/geoman-io/leaflet-geoman) Subplugin",
+  "main": "webpack.build.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Falke-Design/PMOrtho.git"
+  },
+  "keywords": [],
+  "author": "Florian Bischof / Falke-Design",
+  "license": "ISC"
+}

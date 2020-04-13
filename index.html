@@ -1,0 +1,53 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Leaflet PMOrtho: Adds Ortho mode (45° steps) while key holding</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.2.0/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@geoman-io/leaflet-geoman-free@2.5.0/dist/leaflet-geoman.css">
+    <link rel="stylesheet" href="./demo/demo.css" />
+    <script src="https://unpkg.com/leaflet@latest/dist/leaflet.js"></script>
+</head>
+
+<body>
+    <a href="https://github.com/Falke-Design/PMOrtho"><img src="./demo/github-corner.png" class="githubcorner"/></a>
+    <div class="wrapper">
+
+        <article>
+            <h1 style="margin-bottom: 10px;">Leaflet <a href="https://github.com/Falke-Design/PMOrtho">PMOrtho</a>: Adds Ortho mode (45° steps) to Polyline, Polygon and Rectangle while key holding</h1>
+            <span style="display: block;font-size: 19px;margin-bottom: 20px;">This is a <a href="https://github.com/geoman-io/leaflet-geoman">Leaflet Geoman</a> Subplugin.</span>
+            <span>Hold shift to enable ortho mode by Polyline, Polygon or Rectangle</span>
+            <div class="map" id="example2"></div>
+        </article>
+        <article>
+            <br>
+            <h3><strong>Installation</strong></h3>
+            <span>Download <a href="https://raw.githubusercontent.com/Falke-Design/PMOrtho/master/dist/pmOrtho.js">pmOrtho.js</a> and include them in your project.</span>
+            <pre>&lt;script src="./dist/pmOrtho.js"&gt;&lt;/script&gt;</pre>
+            <span>or use the script over cdn:</span>
+            <pre>&lt;script src="https://cdn.jsdelivr.net/gh/Falke-Design/PMOrtho/dist/pmOrtho.js"&gt;&lt;/script&gt;</pre>
+            <br>
+            <h3><strong>Init PMOrtho</strong></h3>
+            <span>Add PMOrtho after Leaflet Geoman. Default is the shift key</span>
+            <pre>pmOrtho = new L.PMOrtho(map)</pre>
+            <span>You can set a custom key to enable ortho mode. The custom key can be event.key, event.which, event.code (<a href="https://keycode.info/" target="_blank">https://keycode.info/</a>) </span>
+            <pre>pmOrtho = new L.PMOrtho(map, {customKey: 'b'})</pre>
+
+            <h3>Functions</h3>
+            <span><strong>Options</strong></span>
+            <div>
+                <pre>pmOrtho.setOptions(options)</pre>
+                <pre>allowOrtho: true | false</pre>
+                <pre>customKey: event.key | event.which | event.code</pre>
+            </div>
+
+        </article>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@geoman-io/leaflet-geoman-free@2.5.0/dist/leaflet-geoman.min.js"></script>
+    <script src="dist/pmOrtho.js"></script>
+    <script src="./demo/demo.js"></script>
+</body>
+
+</html>
