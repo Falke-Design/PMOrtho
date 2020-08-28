@@ -51,26 +51,22 @@ let shiftUtils = {
         //Get the angle between the two points
         let pointAngle = this._getAngle(p1, p2);
 
+        let snapAngle = this.options.snapAngle || 45;
         let angle = 0;
         let angles = [];
-        if(this.options.snapAngle){
-            angles = [-180];
-            let current = -180;
-            let i = 0;
-            while(i < (360/this.options.snapAngle)){
-                current = current+this.options.snapAngle;
-                angles.push(current);
-                i++;
-            }
-        } else {
-            angles = [-180, -135, -90, -45, 0, 45, 90, 135, 180];
+        let current = 0;
+        let i = 0;
+        while(i < (360/snapAngle)){
+            current = ((i*snapAngle)+startAngle)%360;
+            angles.push(current);
+            i++;
         }
-
+        angles.sort((a, b) => a - b);
         angle = angles.reduce(function(prev, curr) {
-            return (Math.abs(curr - pointAngle+startAngle) < Math.abs(prev - pointAngle+startAngle) ? curr : prev);
+            return (Math.abs(curr - pointAngle) < Math.abs(prev - pointAngle) ? curr : prev);
         });
 
-        let point_result2 = this._findDestinationPoint(p1, distance, angle+startAngle);
+        let point_result2 = this._findDestinationPoint(p1, distance, angle);
         return this.map.containerPointToLatLng(point_result2);
     },
 
@@ -86,10 +82,10 @@ let shiftUtils = {
         return Math.sqrt( x*x + y*y );
     },
     _getAngle(p1,p2){
-        let x = p1.x - p2.x;
-        let y = p1.y - p2.y;
+        let x = p2.x - p1.x;
+        let y = p2.y - p1.y;
         let _angle = ((Math.atan2(y, x) * 180 / Math.PI) * (-1) - 90)* (-1);
-        return _angle < 0 ? _angle + 180 : _angle - 180;
+        return (_angle < 0 ? _angle + 360 : _angle) % 360;
     },
     _getRectanglePoint(A,B){
         let rect = L.rectangle([A,B]);

@@ -210,8 +210,7 @@ L.PMOrtho = L.Class.extend({
                     const secondLastPolygonLatLng = polyPoints[polyPoints.length - 2];
                     const lastPolygonPoint = this._map.latLngToContainerPoint(lastPolygonLatLng);
                     const secondLastPolygonPoint = this._map.latLngToContainerPoint(secondLastPolygonLatLng);
-                    startAngle = that._getAngle(secondLastPolygonPoint,lastPolygonPoint)+90;
-                    startAngle = startAngle > 180 ? startAngle - 180 : startAngle;
+                    startAngle = that._getAngle(secondLastPolygonPoint,lastPolygonPoint);
                 }
 
                 let pt = that._getPointofAngle(lastPolygonLatLng, latlng_mouse,startAngle);
