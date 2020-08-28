@@ -7,7 +7,8 @@ L.PMOrtho = L.Class.extend({
     options: {
         allowOrtho: true,
         customKey: null,
-        snapAngle: 45
+        snapAngle: 45,
+        baseAngleOfLastSegment: false
     },
     cssadded: false,
     initialize(map, options) {
@@ -23,7 +24,7 @@ L.PMOrtho = L.Class.extend({
         L.setOptions(this, options);
     },
     _overwriteFunctions: function() {
-        var that = this;
+        let that = this;
         this._extendedEnable();
         this._extendedDisable();
         L.PM.Draw.Line.prototype._syncHintMarker = this._syncHintMarker(this);
@@ -41,17 +42,17 @@ L.PMOrtho = L.Class.extend({
         this.map.on('pm:globaleditmodetoggled',function (e) {
             if(e.enabled) {
                 e.map.pm.pmOrtho._enableShiftListener();
-                var layers = e.map.pm.pmOrtho._findLayers(e.map);
+                let layers = e.map.pm.pmOrtho._findLayers(e.map);
 
                 //Rectangle
-                var rectLayers = layers.filter(layer => layer instanceof L.Rectangle);
+                let rectLayers = layers.filter(layer => layer instanceof L.Rectangle);
                 rectLayers.forEach(function (layer) {
                     if (!(layer.pm.pmOrtho && layer.pm.pmOrtho.fncoverwritten)) {
                         layer.pm.pmOrtho = {fncoverwritten: true};
                         layer.pm._adjustRectangleForMarkerMoveOrg = layer.pm._adjustRectangleForMarkerMove;
                         layer.pm._adjustRectangleForMarkerMove = function (movedMarker) {
                             if (this._map.pm.pmOrtho._shiftpressed && this._map.pm.pmOrtho.options.allowOrtho) {
-                                var newlatlng = this._map.pm.pmOrtho._getRectanglePoint(movedMarker._oppositeCornerLatLng, movedMarker.getLatLng());
+                                let newlatlng = this._map.pm.pmOrtho._getRectanglePoint(movedMarker._oppositeCornerLatLng, movedMarker.getLatLng());
                                 movedMarker.setLatLng(newlatlng);
                             }
                             layer.pm._adjustRectangleForMarkerMoveOrg(movedMarker);
@@ -60,7 +61,7 @@ L.PMOrtho = L.Class.extend({
                 });
 
                 //Line
-                var lineLayers = layers.filter(layer => !(layer instanceof L.Rectangle) && (layer instanceof L.Polyline));
+                let lineLayers = layers.filter(layer => !(layer instanceof L.Rectangle) && (layer instanceof L.Polyline));
                 lineLayers.forEach(function (layer) {
                     if (!(layer.pm.pmOrtho && layer.pm.pmOrtho.fncoverwritten)) {
                         layer.pm.pmOrtho = {fncoverwritten: true};
@@ -84,7 +85,18 @@ L.PMOrtho = L.Class.extend({
                                 // get latlng of prev and next marker
                                 const prevMarkerLatLng = markerArr[prevMarkerIndex].getLatLng();
 
-                                var newlatlng = this._map.pm.pmOrtho._getPointofAngle(prevMarkerLatLng, marker.getLatLng());
+                                let startAngle = 0;
+
+                                if(this._map.pm.pmOrtho.options.baseAngleOfLastSegment && markerArr.length > 1){
+                                    const prevPrevMarkerIndex = (index + (markerArr.length - 2)) % markerArr.length;
+                                    const prevPrevMarkerLatLng = markerArr[prevPrevMarkerIndex].getLatLng();
+                                    const lastPolygonPoint = this._map.latLngToContainerPoint(prevMarkerLatLng);
+                                    const secondLastPolygonPoint = this._map.latLngToContainerPoint(prevPrevMarkerLatLng);
+                                    startAngle = this._map.pm.pmOrtho._getAngle(secondLastPolygonPoint,lastPolygonPoint)+90;
+                                    startAngle = startAngle > 180 ? startAngle - 180 : startAngle;
+                                }
+
+                                let newlatlng = this._map.pm.pmOrtho._getPointofAngle(prevMarkerLatLng, marker.getLatLng(),startAngle);
                                 e.target._latlng = newlatlng;
                                 e.target.update();
                             }
@@ -123,7 +135,7 @@ L.PMOrtho = L.Class.extend({
         return layers;
     },
     _extendedEnable(){
-        var that = this;
+        let that = this;
         L.PM.Draw.Line.prototype.enableOrg = L.PM.Draw.Line.prototype.enable;
         L.PM.Draw.Line.prototype.enable = function (options) {
             this.enableOrg(options);
@@ -157,7 +169,7 @@ L.PMOrtho = L.Class.extend({
         };
     },
     _extendedDisable(){
-        var that = this;
+        let that = this;
         L.PM.Draw.Line.prototype.disableOrg = L.PM.Draw.Line.prototype.disable;
         L.PM.Draw.Line.prototype.disable = function () {
             this.disableOrg();
@@ -189,9 +201,20 @@ L.PMOrtho = L.Class.extend({
         return function (e){
             const polyPoints = this._layer.getLatLngs();
             if (polyPoints.length > 0 && this._map.pm.pmOrtho._shiftpressed && this._map.pm.pmOrtho.options.allowOrtho) {
-                const lastPolygonPoint = polyPoints[polyPoints.length - 1];
-                var latlng_mouse = e.latlng;
-                var pt = that._getPointofAngle(lastPolygonPoint, latlng_mouse);
+                const lastPolygonLatLng = polyPoints[polyPoints.length - 1];
+                let latlng_mouse = e.latlng;
+
+                let startAngle = 0;
+
+                if(this._map.pm.pmOrtho.options.baseAngleOfLastSegment && polyPoints.length > 1){
+                    const secondLastPolygonLatLng = polyPoints[polyPoints.length - 2];
+                    const lastPolygonPoint = this._map.latLngToContainerPoint(lastPolygonLatLng);
+                    const secondLastPolygonPoint = this._map.latLngToContainerPoint(secondLastPolygonLatLng);
+                    startAngle = that._getAngle(secondLastPolygonPoint,lastPolygonPoint)+90;
+                    startAngle = startAngle > 180 ? startAngle - 180 : startAngle;
+                }
+
+                let pt = that._getPointofAngle(lastPolygonLatLng, latlng_mouse,startAngle);
                 this._hintMarker.setLatLng(pt);
                 e.latlng = pt; //Because of intersection
             } else {
@@ -208,16 +231,26 @@ L.PMOrtho = L.Class.extend({
 
             // if self-intersection is forbidden, handle it
             if (!this.options.allowSelfIntersection) {
-                this._handleSelfIntersection(true, e.latlng);
+                this._handleSelfIntersection(true, this._hintMarker.getLatLng());
             }
         }
     },
     _createVertexNew(e){
         const polyPoints = this._layer.getLatLngs();
         if (polyPoints.length > 0 &&  this._map.pm.pmOrtho._shiftpressed &&  this._map.pm.pmOrtho.options.allowOrtho) {
-            const lastPolygonPoint = polyPoints[polyPoints.length - 1];
-            var latlng_mouse = e.latlng;
-            var pt = this._map.pm.pmOrtho._getPointofAngle(lastPolygonPoint,latlng_mouse);
+            const lastPolygonLatLng = polyPoints[polyPoints.length - 1];
+            let latlng_mouse = e.latlng;
+            let startAngle = 0;
+
+            if(this._map.pm.pmOrtho.options.baseAngleOfLastSegment && polyPoints.length > 1){
+                const secondLastPolygonLatLng = polyPoints[polyPoints.length - 2];
+                const lastPolygonPoint = this._map.latLngToContainerPoint(lastPolygonLatLng);
+                const secondLastPolygonPoint = this._map.latLngToContainerPoint(secondLastPolygonLatLng);
+                startAngle = this._map.pm.pmOrtho._getAngle(secondLastPolygonPoint,lastPolygonPoint)+90;
+                startAngle = startAngle > 180 ? startAngle - 180 : startAngle;
+            }
+
+            let pt = this._map.pm.pmOrtho._getPointofAngle(lastPolygonLatLng,latlng_mouse,startAngle);
             e.latlng = pt; //Because of intersection
         }
         this._createVertex(e);

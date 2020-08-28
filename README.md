@@ -27,4 +27,6 @@ You can set a custom key to enable ortho mode. The custom key can be event.key, 
 ```
 allowOrtho: true | false
 customKey: event.key | event.which | event.code
+snapAngle: 45
+baseAngleOfLastSegment: false
 ```

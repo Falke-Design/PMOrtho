@@ -18,7 +18,7 @@ const map = L.map('example2')
 
 map.pm.addControls();
 
-var pmOrtho = new L.PMOrtho(map);
+let pmOrtho = new L.PMOrtho(map);
 
 const m1 = L.circleMarker([51.50313, -0.091223], { radius: 10 });
 const m2 = L.marker([51.50614, -0.0989]);
