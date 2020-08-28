@@ -46,35 +46,26 @@ var shiftUtils = {
         var p2 = this.map.latLngToContainerPoint(latlng_p2);
 
         var distance = this._getDistance(p1, p2);
-
         //Get the angle between the two points
         var pointAngle = this._getAngle(p1, p2);
 
         var angle = 0;
-        //45° steps
-        if(pointAngle <= 22.5 && pointAngle > -22.5){
-            angle = 0;
-        }else if(pointAngle <= 67.5 && pointAngle > 22.5){
-            angle = 45;
-            return this._getRectanglePoint(latlng_p1,latlng_p2);
-        }else if(pointAngle <= 112.5 && pointAngle > 67.5){
-            angle = 90;
-        }else if(pointAngle <= 157.5 && pointAngle > 112.5){
-            angle = 135;
-            return this._getRectanglePoint(latlng_p1,latlng_p2);
-        }else if(pointAngle <= 180 && pointAngle > 157.5){
-            angle = 180;
-        }else if(pointAngle <= -157.5 && pointAngle > -180){
-            angle = -180;
-        }else if(pointAngle <= -112.5 && pointAngle > -157.5 ){
-            angle = -135;
-            return this._getRectanglePoint(latlng_p1,latlng_p2);
-        }else if(pointAngle <= -67.5 && pointAngle > -112.5 ){
-            angle = -90;
-        }else if(pointAngle <= -22.5 && pointAngle > -67.5 ){
-            angle = -45;
-            return this._getRectanglePoint(latlng_p1,latlng_p2);
+        if(this.options.snapAngle){
+          var angles = [-180];
+          let current = -180;
+          let i = 0;
+          while(i < (360/this.options.snapAngle)){
+            current = current+this.options.snapAngle;
+            angles.push(current);
+            i++;
+          }
+        } else {
+          var angles = [-180, -135, -90, -45, 0, 45, 90, 135, 180];
         }
+
+        angle = angles.reduce(function(prev, curr) {
+          return (Math.abs(curr - pointAngle) < Math.abs(prev - pointAngle) ? curr : prev);
+        });
 
         var point_result2 = this._findDestinationPoint(p1, distance, angle);
         return this.map.containerPointToLatLng(point_result2);
