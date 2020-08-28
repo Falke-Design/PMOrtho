@@ -6,7 +6,8 @@ L.PMOrtho = L.Class.extend({
     includes: [shiftUtils],
     options: {
         allowOrtho: true,
-        customKey: null
+        customKey: null,
+        snapAngle: 45
     },
     cssadded: false,
     initialize(map, options) {
