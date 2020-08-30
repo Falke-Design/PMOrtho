@@ -2,6 +2,8 @@
   "name": "PMOrtho",
   "version": "1.0.0",
   "dependencies": {
+    "@turf/bearing": "^6.0.1",
+    "@turf/sector": "^5.1.5",
     "lodash": "^4.17.15"
   },
   "scripts": {

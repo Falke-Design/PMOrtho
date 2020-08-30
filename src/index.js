@@ -1,6 +1,7 @@
 import shiftUtils from "./shiftUtils";
 import get from 'lodash/get';
-
+import sector from '@turf/sector';
+import bearing from '@turf/bearing';
 
 L.PMOrtho = L.Class.extend({
     includes: [shiftUtils],
@@ -36,6 +37,16 @@ L.PMOrtho = L.Class.extend({
             this._finishShapeOrg(e);
         }
 
+        that.map.on('pm:create',()=>{
+            if(that._angleLine){
+                that._angleLine.removeFrom(that.map);
+                that._angleLine = null;
+            }
+            if(that.tooltip){
+                that.tooltip.removeFrom(that.map);
+                that.tooltip = null;
+            }
+        });
 
 
         //Edit
@@ -67,24 +78,26 @@ L.PMOrtho = L.Class.extend({
                         layer.pm.pmOrtho = {fncoverwritten: true};
                         layer.pm._onMarkerDragOrg = layer.pm._onMarkerDrag;
                         layer.pm._onMarkerDrag = function (e) {
+                            const marker = e.target;
+
+                            const { indexPath, index, parentPath } = this.findDeepMarkerIndex(
+                                this._markers,
+                                marker
+                            );
+                            // only continue if this is NOT a middle marker
+                            if (!indexPath) {
+                                return;
+                            }
+                            // the dragged markers neighbors
+                            const markerArr = indexPath.length > 1 ? get(this._markers, parentPath) : this._markers;
+                            // find the indizes of next and previous markers
+                            const prevMarkerIndex = (index + (markerArr.length - 1)) % markerArr.length;
+                            const nextMarkerIndex = (index + (markerArr.length + 1)) % markerArr.length;
+                            // get latlng of prev and next marker
+                            const prevMarkerLatLng = markerArr[prevMarkerIndex].getLatLng();
+                            const nextMarkerLatLng = markerArr[nextMarkerIndex].getLatLng();
+
                             if (this._map.pm.pmOrtho._shiftpressed && this._map.pm.pmOrtho.options.allowOrtho) {
-                                const marker = e.target;
-
-                                const { indexPath, index, parentPath } = this.findDeepMarkerIndex(
-                                    this._markers,
-                                    marker
-                                );
-                                // only continue if this is NOT a middle marker
-                                if (!indexPath) {
-                                    return;
-                                }
-                                // the dragged markers neighbors
-                                const markerArr = indexPath.length > 1 ? get(this._markers, parentPath) : this._markers;
-                                // find the indizes of next and previous markers
-                                const prevMarkerIndex = (index + (markerArr.length - 1)) % markerArr.length;
-                                // get latlng of prev and next marker
-                                const prevMarkerLatLng = markerArr[prevMarkerIndex].getLatLng();
-
                                 let startAngle = 0;
 
                                 if(this._map.pm.pmOrtho.options.baseAngleOfLastSegment && markerArr.length > 1){
@@ -100,8 +113,47 @@ L.PMOrtho = L.Class.extend({
                                 e.target._latlng = newlatlng;
                                 e.target.update();
                             }
+
+                            if(markerArr.length > 1) {
+                                if (!that._angleLine) {
+                                    that._angleLine = L.polyline([], {smoothFactor: 0}).addTo(map);
+                                }
+
+                                const centerPoint = this._map.latLngToContainerPoint(marker.getLatLng());
+                                const lastPolygonPoint = this._map.latLngToContainerPoint(prevMarkerLatLng);
+                                const nextPolygonPoint = this._map.latLngToContainerPoint(nextMarkerLatLng);
+
+                                let angle = that._getAngle(centerPoint, nextPolygonPoint);
+                                angle = that._formatAngle(angle - that._getAngle(centerPoint, lastPolygonPoint));
+                                that._angleLine.setLatLngs(that._addAngleLine(prevMarkerLatLng,marker.getLatLng(), nextMarkerLatLng).getLatLngs());
+
+                                if (!that.tooltip) {
+                                    that.tooltip = L.tooltip({
+                                        permanent: true,
+                                        offset: L.point(0, 10),
+                                        direction: 'bottom',
+                                        opacity: 0.8,
+                                    }).setContent('Angle: ' + angle).setLatLng(marker.getLatLng()).addTo(this._map);
+                                }else{
+                                    that.tooltip.setLatLng(marker.getLatLng()).setContent('Angle: ' + angle);
+                                }
+                            }
+
                             layer.pm._onMarkerDragOrg(e);
-                        }
+                        };
+                        layer.pm._onMarkerDragEndOrg = layer.pm._onMarkerDragEnd;
+                        layer.pm._onMarkerDragEnd = function (e) {
+                            if(that._angleLine){
+                                that._angleLine.removeFrom(that.map);
+                                that._angleLine = null;
+                            }
+                            if(that.tooltip) {
+                                that.tooltip.removeFrom(that.map);
+                                that.tooltip = null;
+                            }
+
+                            layer.pm._onMarkerDragEndOrg(e);
+                        };
                         layer.pm.disable();
                         layer.pm.enable();
                     }
@@ -221,6 +273,8 @@ L.PMOrtho = L.Class.extend({
                 this._hintMarker.setLatLng(e.latlng);
             }
 
+
+
             // if snapping is enabled, do it
             if (this.options.snappable) {
                 const fakeDragEvent = e;
@@ -232,24 +286,66 @@ L.PMOrtho = L.Class.extend({
             if (!this.options.allowSelfIntersection) {
                 this._handleSelfIntersection(true, this._hintMarker.getLatLng());
             }
+
+            if(polyPoints.length > 1) {
+                if (!that._angleLine) {
+                    that._angleLine = L.polyline([], {smoothFactor: 0}).addTo(map);
+                }
+
+                let startAngle = 0;
+
+                const secondLastPolygonLatLng = polyPoints[polyPoints.length - 2];
+                const lastPolygonLatLng = polyPoints[polyPoints.length - 1];
+                const lastPolygonPoint = this._map.latLngToContainerPoint(lastPolygonLatLng);
+                if(this._map.pm.pmOrtho.options.baseAngleOfLastSegment && polyPoints.length > 1){
+                    const secondLastPolygonPoint = this._map.latLngToContainerPoint(secondLastPolygonLatLng);
+                    startAngle = that._getAngle(secondLastPolygonPoint,lastPolygonPoint);
+                }
+
+                let latlng_mouse = this._hintMarker.getLatLng(); // because of snapping the hintmarker change position
+                const mousePoint = this._map.latLngToContainerPoint(latlng_mouse);
+                let angle = that._formatAngle(that._getAngle(mousePoint,lastPolygonPoint) -startAngle);
+                that._angleLine.setLatLngs(that._addAngleLine(secondLastPolygonLatLng, lastPolygonLatLng, latlng_mouse).getLatLngs());
+
+                if (!that.tooltip) {
+                    that.tooltip = L.tooltip({
+                        permanent: true,
+                        offset: L.point(0, 10),
+                        direction: 'bottom',
+                        opacity: 0.8,
+                    }).setContent('Angle: ' + angle).setLatLng(lastPolygonLatLng).addTo(this._map);
+                }else{
+                    that.tooltip.setLatLng(lastPolygonLatLng).setContent('Angle: ' + angle);
+                }
+            }
         }
     },
     _createVertexNew(e){
+        const that = this._map.pm.pmOrtho;
         const polyPoints = this._layer.getLatLngs();
-        if (polyPoints.length > 0 &&  this._map.pm.pmOrtho._shiftpressed &&  this._map.pm.pmOrtho.options.allowOrtho) {
+        if (polyPoints.length > 0 &&  that._shiftpressed &&  that.options.allowOrtho) {
             const lastPolygonLatLng = polyPoints[polyPoints.length - 1];
             let latlng_mouse = e.latlng;
             let startAngle = 0;
 
-            if(this._map.pm.pmOrtho.options.baseAngleOfLastSegment && polyPoints.length > 1){
+            if(that.options.baseAngleOfLastSegment && polyPoints.length > 1){
                 const secondLastPolygonLatLng = polyPoints[polyPoints.length - 2];
                 const lastPolygonPoint = this._map.latLngToContainerPoint(lastPolygonLatLng);
                 const secondLastPolygonPoint = this._map.latLngToContainerPoint(secondLastPolygonLatLng);
-                startAngle = this._map.pm.pmOrtho._getAngle(secondLastPolygonPoint,lastPolygonPoint)+90;
+                startAngle = that._getAngle(secondLastPolygonPoint,lastPolygonPoint)+90;
                 startAngle = startAngle > 180 ? startAngle - 180 : startAngle;
             }
 
-            let pt = this._map.pm.pmOrtho._getPointofAngle(lastPolygonLatLng,latlng_mouse,startAngle);
+            if(that._angleLine){
+                that._angleLine.removeFrom(this._map);
+                that._angleLine = null;
+            }
+            if(that.tooltip){
+                that.tooltip.removeFrom(this._map);
+                that.tooltip = null;
+            }
+
+            let pt = that._getPointofAngle(lastPolygonLatLng,latlng_mouse,startAngle);
             e.latlng = pt; //Because of intersection
         }
         this._createVertex(e);
@@ -277,6 +373,42 @@ L.PMOrtho = L.Class.extend({
             });
         }
     },
+    _addAngleLine(p1,center,p2){
+        let b1 = bearing(this._toLngLat(center), this._toLngLat(p1));
+        let b2 = bearing(this._toLngLat(center), this._toLngLat(p2));
+        b1 = b1 < 0 ? b1 +360 : b1; // bearing is by default between -180 and 180
+        b2 = b2 < 0 ? b2 +360 : b2;
+
+        let dis1 = p1.distanceTo(center);
+        let dis2 = p2.distanceTo(center);
+
+        // set the smallest distance as radius
+        let radius = dis1;
+        if(dis2 < radius){
+            radius = dis2;
+        }
+
+        if(dis1/dis2 < 0.4){// smooth increasing of the circle, because the difference between the to lines is greater then 40%
+            radius = dis1 * (1-(dis1/dis2));
+        } else if( dis2/dis1 < 0.4){ // smooth increasing of the circle, because the difference between the to lines is greater then 40%
+            radius = dis2 * (1-(dis2/dis1));
+        } else{ // minimum circle-radius
+            radius = radius * 0.4;
+        }
+
+        // crete the sector (circle part) with 360 latlng points
+        let x = sector(this._toLngLat(center), radius/1000, b1, b2, {steps: 360});
+        let polygon = L.geoJson(x).getLayers()[0]; // get the polygon from the geojson
+        let polyline = L.polyline(polygon.getLatLngs()); // we want to return a polyline no polygon
+        return polyline;
+    },
+    _toLngLat(latlng){
+        return [latlng.lng,latlng.lat];
+    },
+    _formatAngle(_angle){
+        const angle = (_angle < 0 ? _angle + 360 : _angle) % 360;
+        return angle.toFixed(2);
+    }
 });
 
 
