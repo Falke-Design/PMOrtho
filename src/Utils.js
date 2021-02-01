@@ -1,13 +1,11 @@
-let shiftUtils = {
+let Utils = {
     _enableKeyListener(){
-        console.log('enabled')
         L.DomEvent.on(this.map.getContainer(),'keydown', this._keyDownFunction,this);
         L.DomEvent.on(this.map.getContainer(),'keyup', this._keyDownFunction,this);
         L.DomEvent.on(this.map.getContainer(), 'mouseover', this._keyDownFunction, this);
         this.map.boxZoom.disable();
     },
     _disableKeyListener(){
-        console.log('disabled')
         L.DomEvent.off(this.map.getContainer(),'keydown', this._keyDownFunction,this);
         L.DomEvent.off(this.map.getContainer(),'keyup', this._keyDownFunction,this);
         L.DomEvent.off(this.map.getContainer(), 'mouseover', this._keyDownFunction, this);
@@ -110,7 +108,6 @@ let shiftUtils = {
         }
         return this.map.containerPointToLatLng(d);
     }
-    //
 };
 
-export default shiftUtils
+export default Utils
