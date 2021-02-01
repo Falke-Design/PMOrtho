@@ -29,4 +29,6 @@ allowOrtho: true | false
 customKey: event.key | event.which | event.code
 snapAngle: 45
 baseAngleOfLastSegment: false
+showAngleTooltip: true
+angleText: "Angle: "
 ```

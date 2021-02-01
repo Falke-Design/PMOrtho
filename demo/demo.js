@@ -20,11 +20,7 @@ map.pm.addControls();
 
 let pmOrtho = new L.PMOrtho(map);
 
-const m1 = L.circleMarker([51.50313, -0.091223], { radius: 10 });
-const m2 = L.marker([51.50614, -0.0989]);
-const m3 = L.marker([51.50915, -0.096112]);
-const poly = L.polygon([[51.50915, -0.096112],[51.50614, -0.0989],[51.50313, -0.091223]]);
-const circle = L.circle([ 51.50227810647,-0.0993],100);
+const poly = L.polyline([[51.50915, -0.096112],[51.50614, -0.0989],[51.50313, -0.091223]]).addTo(map);
 
 
-pmOrtho.setOptions({baseAngleOfLastSegment: false, snapAngle: 45});
+pmOrtho.setOptions({baseAngleOfLastSegment: true, snapAngle: 45});
