@@ -218,12 +218,28 @@ L.PMOrtho = L.Class.extend({
             this._map.pm.pmOrtho._disableShiftListener();
             this._map.off('click', this._map.pm.pmOrtho._createVertexNew, this);
 
+            if (this._map.pm.pmOrtho._angleLine) {
+                this._map.pm.pmOrtho._angleLine.remove();
+                this._map.pm.pmOrtho._angleLine = null;
+            }
+            if (this._map.pm.pmOrtho.tooltip) {
+                this._map.pm.pmOrtho.tooltip.remove();
+                this._map.pm.pmOrtho.tooltip = null;
+            }
         };
 
         L.PM.Draw.Rectangle.prototype.disableOrg = L.PM.Draw.Rectangle.prototype.disable;
         L.PM.Draw.Rectangle.prototype.disable = function () {
             this.disableOrg();
             this._map.pm.pmOrtho._disableShiftListener();
+            if (this._map.pm.pmOrtho._angleLine) {
+                this._map.pm.pmOrtho._angleLine.remove();
+                this._map.pm.pmOrtho._angleLine = null;
+            }
+            if (this._map.pm.pmOrtho.tooltip) {
+                this._map.pm.pmOrtho.tooltip.remove();
+                this._map.pm.pmOrtho.tooltip = null;
+            }
         };
         L.PM.Draw.Rectangle.include({_syncRectangleSize: this._syncRectangleSize});
     },
