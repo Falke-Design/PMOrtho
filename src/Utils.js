@@ -59,6 +59,7 @@ let Utils = {
             angles.push(current);
             i++;
         }
+        angles.push(360);
         angles.sort((a, b) => a - b);
         angle = angles.reduce(function(prev, curr) {
             return (Math.abs(curr - pointAngle) < Math.abs(prev - pointAngle) ? curr : prev);
@@ -69,7 +70,7 @@ let Utils = {
     },
 
     _findDestinationPoint(point, distance, angle) {
-        angle = angle - 90;
+        angle = (angle - 90) % 360;
         let x = Math.round(Math.cos(angle * Math.PI / 180) * distance + point.x);
         let y = Math.round(Math.sin(angle * Math.PI / 180) * distance + point.y);
         return {x: x, y:y};
