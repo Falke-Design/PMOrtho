@@ -95,7 +95,7 @@ L.PMOrtho = L.Class.extend({
 
                         if (markerArr.length > 1) {
                             if (!this._map.pm.pmOrtho._angleLine) {
-                                this._map.pm.pmOrtho._angleLine = L.polyline([], {smoothFactor: 0}).addTo(map);
+                                this._map.pm.pmOrtho._angleLine = L.polyline([], {smoothFactor: 0}).addTo(this._map);
                             }
 
                             const centerPoint = this._map.latLngToContainerPoint(marker.getLatLng());
@@ -295,7 +295,7 @@ L.PMOrtho = L.Class.extend({
 
             if(polyPoints.length > 1) {
                 if (!this._map.pm.pmOrtho._angleLine) {
-                    this._map.pm.pmOrtho._angleLine = L.polyline([], {smoothFactor: 0}).addTo(map);
+                    this._map.pm.pmOrtho._angleLine = L.polyline([], {smoothFactor: 0}).addTo(this._map);
                     this._map.pm.pmOrtho._angleLine.setStyle(this._layer.options);
                 }
 
