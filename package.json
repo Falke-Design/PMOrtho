@@ -11,6 +11,9 @@
     "watch": "npx webpack -w"
   },
   "devDependencies": {
+    "@babel/core": "^7.9.6",
+    "@babel/preset-env": "^7.9.6",
+    "babel-loader": "^8.1.0",
     "@geoman-io/leaflet-geoman-free": "^2.8.0",
     "webpack": "^4.42.1",
     "webpack-cli": "^3.3.11"
