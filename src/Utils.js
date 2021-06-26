@@ -59,7 +59,10 @@ let Utils = {
             angles.push(current);
             i++;
         }
-        angles.push(360);
+
+        if(startAngle % 90 === 0) {
+            angles.push(360);
+        }
         angles.sort((a, b) => a - b);
         angle = angles.reduce(function(prev, curr) {
             return (Math.abs(curr - pointAngle) < Math.abs(prev - pointAngle) ? curr : prev);

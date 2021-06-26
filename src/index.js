@@ -105,7 +105,18 @@ L.PMOrtho = L.Class.extend({
                             let angle = this._map.pm.pmOrtho._getAngle(centerPoint, nextPolygonPoint);
                             angle = this._map.pm.pmOrtho._formatAngle(angle - this._map.pm.pmOrtho._getAngle(centerPoint, lastPolygonPoint));
 
-                            if (this._map.pm.pmOrtho.options.showAngleTooltip) {
+                            let showTooltip = true;
+                            if(this._layer instanceof L.Polygon) {
+                                showTooltip = true;
+                            }else if(this._layer instanceof L.Polyline){
+                                if(prevMarkerIndex < (index +1) && nextMarkerIndex !== 0){
+                                    showTooltip = true;
+                                }else{
+                                    showTooltip = false;
+                                }
+                            }
+
+                            if (this._map.pm.pmOrtho.options.showAngleTooltip && showTooltip) {
                                 const coords = this._map.pm.pmOrtho._addAngleLine(prevMarkerLatLng, marker.getLatLng(), nextMarkerLatLng).getLatLngs();
 
                                 if (coords.length === 0) {
@@ -315,6 +326,7 @@ L.PMOrtho = L.Class.extend({
 
 
                 if(this._map.pm.pmOrtho.options.showAngleTooltip) {
+
                     const coords = this._map.pm.pmOrtho._addAngleLine(secondLastPolygonLatLng, lastPolygonLatLng, latlng_mouse).getLatLngs();
 
                     if(coords.length === 0){
