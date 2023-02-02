@@ -59,7 +59,7 @@ L.PMOrtho = L.Class.extend({
                     layer.pm._onMarkerDrag = function (e) {
                         const marker = e.target;
 
-                        const {indexPath, index, parentPath} = this.findDeepMarkerIndex(
+                        const {indexPath, index, parentPath} = L.PM.Utils.findDeepMarkerIndex(
                             this._markers,
                             marker
                         );
